@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <title></title>
+</head>
+<body>
+   <div id="cesiumContainer" >
+     <div>     
+         <button id="add_rectangle" >矩形</button>
+         <button id="bt_ellipse" >椭圆</button>
+         <button id="bt_image" >填充图片</button>
+         <button id="bt_grid" >填充格网</button>
+         <button id="bt_outline" >边框</button>
+         <button id="bt_polyline" >线</button>
+         <button id="bt_polyline_outline" >线边框</button>
+         <button id="bt_polyline_glow" >亮线</button>
+         <button id="bt_height" >高度延申</button>
+         <button id="bt_label" >点标注</button>         
+         <button id="bt_model" >三维模型</button>
+         <button id="bt_removeEntity" >移除实体对象</button>
+     </div>
+   </div>
+
+<!--加载三维对象，为以后加载自己的地图数据做准备-->
+<script>
+
+     // Your access token can be found at: https://cesium.com/ion/tokens.
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYmEwNWZmMC1lZTlhLTQ0YzQtYTk5OS04MjY0MzgyMmE3MGQiLCJpZCI6MTQ0NzcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjU2NTkwOTZ9.gimVCxsdX7dVIJBhUPO4rHUZh6iHvH-orUikRWlTT9w';
+
+    // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+        //需要进行可视化的数据源的集合
+        animation: false, //是否显示动画控件
+        shouldAnimate: true,
+        homeButton: false, //是否显示Home按钮
+        fullscreenButton: false, //是否显示全屏按钮
+        baseLayerPicker: false, //是否显示图层选择控件
+        geocoder: false, //是否显示地名查找控件
+        timeline: false, //是否显示时间线控件
+        sceneModePicker: true, //是否显示投影方式控件
+        navigationHelpButton: false, //是否显示帮助信息控件
+        infoBox: false, //是否显示点击要素之后显示的信息
+        requestRenderMode: true, //启用请求渲染模式
+        scene3DOnly: false, //每个几何实例将只能以3D渲染以节省GPU内存
+        sceneMode: 3, //初始场景模式 1 2D模式 2 2D循环模式 3 3D模式  Cesium.SceneMode
+        fullscreenElement: document.body, //全屏时渲染的HTML元素 暂时没发现用处
+        terrainProvider: Cesium.createWorldTerrain(),
+    });
+    //去除版权信息
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    
+    var initialPosition = new Cesium.Cartesian3.fromDegrees(110.20, 34.55, 2500);
+    var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(7, -45, 0);
+    var homeCameraView = {
+        destination : initialPosition,
+        orientation : {
+            heading : initialOrientation.heading,
+            pitch : initialOrientation.pitch,
+            roll : initialOrientation.roll
+        }
+    };
+    // 设置初始视图，现在将摄像机定位并定向为向下看，并且我们的视图参数保存在一个对象中，我们可以将其传递给其他摄像机方法。
+    viewer.scene.camera.setView(homeCameraView);
+
+    //////////////////////////////////////////////////////////////////////////
+    // 加载实体对象，了解如何使用CesiumJS中的Entity API绘制空间数据，例如点，标记，标签，线，模型，图形和体。
+   // CesiumJS拥有丰富的空间数据API，可以将其分为两类：面向图形开发人员的低级Primitive API和用于数据驱动的可视化的高级Entity API。
+   // 低级Primitive API它的结构旨在为图形开发人员提供灵活的实现，而不是为了实现API一致性。 加载模型与创建广告牌不同，并且两者都与创建多边形完全不同。
+   // 每种可视化类型都有其自己独特的功能。此外，每个都有不同的性能特征，并且需要不同的最佳实践。尽管此方法功能强大且灵活，但可以为更高级别的抽象更好地服务于大多数应用程序。
+    //EntityAPI公开了一组一致设计的高级对象，这些对象将相关的可视化和信息聚合到一个统一的数据结构中，我们称之为实体。
+    // 它使我们能够专注于数据的表示，而不必担心可视化的潜在机制。
+   // 它还提供了一些结构，可轻松构建复杂的，时动态的可视化文件，并使其自然地适合静态数据。
+   // 尽管Entity API实际上是在后台使用Primitive API，但这是我们（几乎）不必关心的实现细节。
+   // 通过将各种启发式方法应用于我们提供的数据，Entity API能够提供灵活的高性能可视化，同时公开一致，易学且易于使用的接口。
+    //////////////////////////////////////////////////////////////////////////
+
+    //EntityCollection是用于管理和监视一组实体的关联数组。
+    //viewer.entities是一个EntityCollection。
+    //EntityCollection包括用于管理实体的方法，例如add，remove和removeAll。
+    document.getElementById("add_rectangle").onclick=function(){
+        removeEntity();
+        var rect = viewer.entities.add({
+            id:"uniqueId",
+          polygon : {
+            hierarchy : Cesium.Cartesian3.fromDegreesArray([
+              109.080842,45.002073,
+              105.91517,45.002073,
+              104.058488,44.996596,
+              104.053011,43.002989,
+              104.053011,41.003906,
+              105.728954,40.998429,
+              107.919731,41.003906,
+              109.04798,40.998429,
+              111.047063,40.998429,
+              111.047063,42.000709,
+              111.047063,44.476286,
+              111.05254,45.002073]),
+            height : 0,
+            material : Cesium.Color.RED.withAlpha(0.5),
+            outline : true,
+            outlineColor : Cesium.Color.BLACK
+           }
+
+        });
+
+        viewer.zoomTo(rect);
+    }
+
+    document.getElementById("bt_ellipse").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+          id:"uniqueId",
+          position: Cesium.Cartesian3.fromDegrees(-103.0, 40.0),
+          ellipse : {
+            semiMinorAxis : 250000.0,
+            semiMajorAxis : 400000.0,
+            material : Cesium.Color.BLUE.withAlpha(0.5)
+             }
+        });
+        viewer.zoomTo(entity);
+
+        var ellipse = entity.ellipse; // For upcoming examples
+    }
+
+     document.getElementById("bt_image").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+          id:"uniqueId",
+          position: Cesium.Cartesian3.fromDegrees(-103.0, 40.0),
+          ellipse : {
+            semiMinorAxis : 250000.0,
+            semiMajorAxis : 400000.0,
+            material : Cesium.Color.BLUE.withAlpha(0.5)
+             }
+        });
+        viewer.zoomTo(entity);
+
+        var ellipse = entity.ellipse; // For upcoming examples
+        ellipse.material = '/image/Cesium_Logo_Flat.jpg';
+    }
+
+     document.getElementById("bt_grid").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+          id:"uniqueId",
+          position: Cesium.Cartesian3.fromDegrees(-103.0, 40.0),
+          ellipse : {
+            semiMinorAxis : 250000.0,
+            semiMajorAxis : 400000.0,
+            material : Cesium.Color.BLUE.withAlpha(0.5)
+             }
+        });
+        viewer.zoomTo(entity);
+
+        var ellipse = entity.ellipse; // For upcoming examples
+        ellipse.material = new Cesium.GridMaterialProperty({
+          color : Cesium.Color.YELLOW,
+          cellAlpha : 0.2,
+          lineCount : new Cesium.Cartesian2(8, 8),
+          lineThickness : new Cesium.Cartesian2(2.0, 2.0)
+        });
+    }
+
+  
+    document.getElementById("bt_outline").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+          id:"uniqueId",
+          position: Cesium.Cartesian3.fromDegrees(-103.0, 40.0),
+          ellipse : {
+            semiMinorAxis : 250000.0,
+            semiMajorAxis : 400000.0,
+            material : Cesium.Color.BLUE.withAlpha(0.5)
+           }
+        });
+        viewer.zoomTo(entity);
+
+        var ellipse = entity.ellipse; // For upcoming examples
+        ellipse.fill = false;
+        ellipse.outline = true;
+        ellipse.outlineColor = Cesium.Color.YELLOW;
+        ellipse.outlineWidth = 2.0;
+    }
+     document.getElementById("bt_polyline").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+            id:"uniqueId",
+            polyline : {
+                positions : Cesium.Cartesian3.fromDegreesArray([-103, 40,
+                    -103.1, 40]),
+                width : 5,
+                material : Cesium.Color.RED
+            }});
+        viewer.zoomTo(viewer.entities);
+
+        var polyline = entity.polyline // For upcoming examples
+        
+    }
+      document.getElementById("bt_polyline_outline").onclick=function(){
+        removeEntity();
+         var entity = viewer.entities.add({
+            id:"uniqueId",
+            polyline : {
+                positions : Cesium.Cartesian3.fromDegreesArray([-103, 40,
+                    -103.1, 40]),
+                width : 5,
+                material : Cesium.Color.RED
+            }});
+        viewer.zoomTo(viewer.entities);
+
+        var polyline = entity.polyline // For upcoming examples
+        polyline.material = new Cesium.PolylineOutlineMaterialProperty({
+            color : Cesium.Color.ORANGE,
+            outlineWidth : 3,
+            outlineColor : Cesium.Color.BLACK
+        });
+    }
+     document.getElementById("bt_polyline_glow").onclick=function(){
+        removeEntity();
+         var entity = viewer.entities.add({
+            id:"uniqueId",
+            polyline : {
+                positions : Cesium.Cartesian3.fromDegreesArray([-103, 40,
+                    -103.1, 40]),
+                width : 5,
+                material : Cesium.Color.RED
+            }});
+        viewer.zoomTo(viewer.entities);
+
+        var polyline = entity.polyline // For upcoming examples
+        polyline.material = new Cesium.PolylineGlowMaterialProperty({
+            glowPower : 0.2,
+            color : Cesium.Color.BLUE
+        });
+    }
+     document.getElementById("bt_height").onclick=function(){
+        removeEntity();
+         var rect = viewer.entities.add({
+            id:"uniqueId",
+          polygon : {
+            hierarchy : Cesium.Cartesian3.fromDegreesArray([
+              109.080842,45.002073,
+              105.91517,45.002073,
+              104.058488,44.996596,
+              104.053011,43.002989,
+              104.053011,41.003906,
+              105.728954,40.998429,
+              107.919731,41.003906,
+              109.04798,40.998429,
+              111.047063,40.998429,
+              111.047063,42.000709,
+              111.047063,44.476286,
+              111.05254,45.002073]),
+            height : 0,
+            material : Cesium.Color.RED.withAlpha(0.5),
+            outline : true,
+            outlineColor : Cesium.Color.BLACK
+           }
+
+        });
+
+         rect.polygon.height = 250000;
+         rect.polygon.extrudedHeight = 200000;
+        viewer.zoomTo(rect);
+    }
+     document.getElementById("bt_label").onclick=function(){
+        removeEntity();
+        var pointLabel = viewer.entities.add({
+            id:"uniqueId",
+            name : '北京',
+            position : Cesium.Cartesian3.fromDegrees(116.166493, 39.9060534),
+            point : {
+                pixelSize : 5,
+                color : Cesium.Color.RED,
+                outlineColor : Cesium.Color.WHITE,
+                outlineWidth : 2
+            },
+            label : {
+                text : '北京',
+                font : '14pt monospace',
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineWidth : 2,
+                verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset : new Cesium.Cartesian2(0, -9)
+            }
+        });
+
+        viewer.zoomTo(pointLabel);
+    }
+   
+     document.getElementById("bt_model").onclick=function(){
+        removeEntity();
+        var entity = viewer.entities.add({
+            position : Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706),
+            model : {
+                uri : '/data/Cesium_Air.glb'
+            }
+        });
+        viewer.trackedEntity = entity;
+    }
+
+     document.getElementById("bt_removeEntity").onclick=function(){
+        removeEntity();
+    }
+  
+
+   
+    function removeEntity(){
+        var entity = viewer.entities.getById("uniqueId");
+        if(entity!=null) {
+            viewer.entities.remove(entity);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //拾取（单击以选择一个对象）是我们需要与Primitive API进行短暂交互的区域之一。
+    //使用scene.pick和scene.drillPick检索实体。
+    //id是添加entity时赋予的id属性值
+    //////////////////////////////////////////////////////////////////////////
+    var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+    handler.setInputAction(function (movement) {
+        var tr = pickEntity(viewer,movement.position);
+        if(tr.id=="entity"){
+            alert('picked entity');
+        }
+
+        // var pick = viewer.scene.pick(movement.position);
+        // if (Cesium.defined(pick) && (pick.id.id === 'entity')) {
+        //     alert('picked!');
+        // }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    /**
+     * Returns the top-most entity at the provided window coordinates
+     * or undefined if no entity is at that location.
+     *
+     * @param {Cartesian2} windowPosition The window coordinates.
+     * @returns {Entity} The picked entity or undefined.
+     */
+    function pickEntity(viewer, windowPosition) {
+        var picked = viewer.scene.pick(windowPosition);
+        if (Cesium.defined(picked)) {
+            var id = Cesium.defaultValue(picked.id, picked.primitive.id);
+            if (id instanceof Cesium.Entity) {
+                return id;
+            }
+        }
+        return undefined;
+    };
+
+    /**
+     * Returns the list of entities at the provided window coordinates.
+     * The entities are sorted front to back by their visual order.
+     *
+     * @param {Cartesian2} windowPosition The window coordinates.
+     * @returns {Entity[]} The picked entities or undefined.
+     */
+    function drillPickEntities(viewer, windowPosition) {
+        var i;
+        var entity;
+        var picked;
+        var pickedPrimitives = viewer.scene.drillPick(windowPosition);
+        var length = pickedPrimitives.length;
+        var result = [];
+        var hash = {};
+
+        for (i = 0; i < length; i++) {
+            picked = pickedPrimitives[i];
+            entity = Cesium.defaultValue(picked.id, picked.primitive.id);
+            if (entity instanceof Cesium.Entity &&
+                !Cesium.defined(hash[entity.id])) {
+                result.push(entity);
+                hash[entity.id] = true;
+            }
+        }
+        return result;
+    };
+</script>
+</body>
+</html>
