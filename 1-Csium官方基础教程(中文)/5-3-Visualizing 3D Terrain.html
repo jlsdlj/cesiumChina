@@ -12,19 +12,17 @@
     // Your access token can be found at: https://cesium.com/ion/tokens.
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYmEwNWZmMC1lZTlhLTQ0YzQtYTk5OS04MjY0MzgyMmE3MGQiLCJpZCI6MTQ0NzcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjU2NTkwOTZ9.gimVCxsdX7dVIJBhUPO4rHUZh6iHvH-orUikRWlTT9w';
     // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
-    const viewer = new Cesium.Viewer('cesiumContainer'); 
-    var layers = viewer.scene.imageryLayers;
-    var blackMarble = layers.addImageryProvider(new Cesium.IonImageryProvider({ assetId: 3812 }));   
-    blackMarble.alpha = 0.8; // 0.0 透明.  1.0 不透明
-    blackMarble.brightness = 2.0; // > 1.0 增加.  < 1.0 减少.
-    layers.addImageryProvider(new Cesium.SingleTileImageryProvider({
-        url : './data/CesiumLogo.png',
-        rectangle : Cesium.Rectangle.fromDegrees(-75.0, 28.0, -67.0, 29.75)
-    }));
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+        terrainProvider : Cesium.createWorldTerrain({
+            requestVertexNormals: true, //开启法线
+            requestWaterMask: true //海水
+        })
+    });
+
+    viewer.scene.globe.enableLighting = true;
 
 
-
-
+    
   </script>
  </div>
 </body>
