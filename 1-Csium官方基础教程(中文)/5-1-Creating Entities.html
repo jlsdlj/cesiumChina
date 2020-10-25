@@ -18,7 +18,7 @@
          <button id="bt_polyline" >线</button>
          <button id="bt_polyline_outline" >线边框</button>
          <button id="bt_polyline_glow" >亮线</button>
-         <button id="bt_height" >高度延申</button>
+         <button id="bt_height" >高度延伸</button>
          <button id="bt_label" >点标注</button>         
          <button id="bt_model" >三维模型</button>
          <button id="bt_removeEntity" >移除实体对象</button>
@@ -141,7 +141,7 @@
         viewer.zoomTo(entity);
 
         var ellipse = entity.ellipse; // For upcoming examples
-        ellipse.material = '/image/Cesium_Logo_Flat.jpg';
+        ellipse.material = './data/Cesium_Logo_Flat.jpg';
     }
 
      document.getElementById("bt_grid").onclick=function(){
@@ -298,7 +298,7 @@
         var entity = viewer.entities.add({
             position : Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706),
             model : {
-                uri : '/data/Cesium_Air.glb'
+                uri : './data/Cesium_Air.glb'
             }
         });
         viewer.trackedEntity = entity;
