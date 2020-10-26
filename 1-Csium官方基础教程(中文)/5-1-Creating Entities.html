@@ -83,7 +83,7 @@
     //viewer.entities是一个EntityCollection。
     //EntityCollection包括用于管理实体的方法，例如add，remove和removeAll。
     document.getElementById("add_rectangle").onclick=function(){
-        removeEntity();
+            removeEntity();
         var rect = viewer.entities.add({
             id:"uniqueId",
           polygon : {
@@ -296,6 +296,7 @@
      document.getElementById("bt_model").onclick=function(){
         removeEntity();
         var entity = viewer.entities.add({
+            id:"uniqueId",
             position : Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706),
             model : {
                 uri : './data/Cesium_Air.glb'

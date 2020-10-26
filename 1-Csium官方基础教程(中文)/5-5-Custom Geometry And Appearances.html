@@ -7,111 +7,138 @@
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 </head>
 <body>
-  <div id="cesiumContainer"></div>
+  <div id="cesiumContainer">
+    <div>
+      <button id="geometry">几何图形</button>
+      <button id = "combineGeometry">几何图形组合</button>
+      <button id="geometryInstance">几何实例</button>
+      <button id="clear">清除</button>
+    </div>
+  </div>
   <script>
     // Your access token can be found at: https://cesium.com/ion/tokens.
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYmEwNWZmMC1lZTlhLTQ0YzQtYTk5OS04MjY0MzgyMmE3MGQiLCJpZCI6MTQ0NzcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjU2NTkwOTZ9.gimVCxsdX7dVIJBhUPO4rHUZh6iHvH-orUikRWlTT9w';
     // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
     const viewer = new Cesium.Viewer('cesiumContainer');
     var scene = viewer.scene;
+    var pri_obj =null;
 
-    // var instance = new Cesium.GeometryInstance({
-    //     geometry : new Cesium.RectangleGeometry({
-    //         rectangle : Cesium.Rectangle.fromDegrees(-100.0, 20.0, -90.0, 30.0),
-    //         vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
-    //     }),
-    //     attributes : {
-    //         color : new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 1.0, 0.8)
-    //     }
-    // });
-    //
-    // var anotherInstance = new Cesium.GeometryInstance({
-    //     geometry : new Cesium.RectangleGeometry({
-    //         rectangle : Cesium.Rectangle.fromDegrees(-85.0, 20.0, -75.0, 30.0),
-    //         vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
-    //     }),
-    //     attributes : {
-    //         color : new Cesium.ColorGeometryInstanceAttribute(1.0, 0.0, 0.0, 0.8)
-    //     }
-    // });
-    //
-    // scene.primitives.add(new Cesium.Primitive({
-    //     geometryInstances : [instance,anotherInstance],
-    //     //单独设置样式
-    //     appearance : new Cesium.PerInstanceColorAppearance()
-    //     //统一设置样式
-    //     // appearance : new Cesium.EllipsoidSurfaceAppearance({
-    //     //     material : Cesium.Material.fromType('Stripe')
-    //     // })
-    // }));
-
-    //添加多个geometry
-    // var instances = [];
-    // for (var lon = -180.0; lon < 180.0; lon += 5.0) {
-    //     for (var lat = -85.0; lat < 85.0; lat += 5.0) {
-    //         instances.push(new Cesium.GeometryInstance({
-    //             geometry : new Cesium.RectangleGeometry({
-    //                 rectangle : Cesium.Rectangle.fromDegrees(lon, lat, lon + 5.0, lat + 5.0),
-    //                 vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
-    //             }),
-    //             attributes : {
-    //                 color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom({alpha : 0.5}))
-    //             }
-    //         }));
-    //     }
-    // }
-    //
-    // scene.primitives.add(new Cesium.Primitive({
-    //     geometryInstances : instances,
-    //     appearance : new Cesium.PerInstanceColorAppearance()
-    // }));
-
-   //modelmatrix,一个Geometry,多个instances
-    var ellipsoidGeometry = new Cesium.EllipsoidGeometry({
-        vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
-        radii : new Cesium.Cartesian3(300000.0, 200000.0, 150000.0)
-    });
-
-    var cyanEllipsoidInstance = new Cesium.GeometryInstance({
-        id:"gi_1",
-        geometry : ellipsoidGeometry,
-        modelMatrix : Cesium.Matrix4.multiplyByTranslation(
-            Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(-100.0, 40.0)),
-            new Cesium.Cartesian3(0.0, 0.0, 150000.0),
-            new Cesium.Matrix4()
-        ),
-        attributes : {
-            color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.CYAN)
+    function removePrimitive(){
+        if(pri_obj!=null&&viewer.scene.primitives.contains(pri_obj)) {
+            viewer.scene.primitives.remove(pri_obj);
+            pri_obj=null;
         }
-    });
+    };
 
-    var orangeEllipsoidInstance = new Cesium.GeometryInstance({
-        id:"gi_2",
-        geometry : ellipsoidGeometry,
-        modelMatrix : Cesium.Matrix4.multiplyByTranslation(
-            Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(-100.0, 40.0)),
-            new Cesium.Cartesian3(0.0, 0.0, 450000.0),
-            new Cesium.Matrix4()
-        ),
-        attributes : {
-            color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.ORANGE)
+
+    document.getElementById("geometry").onclick=function () {
+        removePrimitive();
+        var instance = new Cesium.GeometryInstance({
+            id:"myPrimitive",
+            geometry : new Cesium.RectangleGeometry({
+                rectangle : Cesium.Rectangle.fromDegrees(-100.0, 20.0, -90.0, 30.0),
+                vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+            })
+        });
+
+       pri_obj = scene.primitives.add(new Cesium.Primitive({
+            geometryInstances : instance,
+            appearance : new Cesium.EllipsoidSurfaceAppearance({
+                material : Cesium.Material.fromType('Stripe')
+            })
+        }));
+    };
+
+    document.getElementById("combineGeometry").onclick=function () {
+        removePrimitive();
+        //添加多个geometry
+        var instances = [];
+        for (var lon = -180.0; lon < 180.0; lon += 5.0) {
+            for (var lat = -85.0; lat < 85.0; lat += 5.0) {
+                instances.push(new Cesium.GeometryInstance({
+                    geometry : new Cesium.RectangleGeometry({
+                        rectangle : Cesium.Rectangle.fromDegrees(lon, lat, lon + 5.0, lat + 5.0),
+                        vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+                    }),
+                    attributes : {
+                        color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromRandom({alpha : 0.5}))
+                    }
+                }));
+            }
         }
-    });
 
-    var primitive = new Cesium.Primitive({
-        geometryInstances : [cyanEllipsoidInstance, orangeEllipsoidInstance],
-        appearance : new Cesium.PerInstanceColorAppearance({
-            translucent : false,
-            closed : true
-        })
-    });
+        pri_obj = scene.primitives.add(new Cesium.Primitive({
+            geometryInstances : instances,
+            appearance : new Cesium.PerInstanceColorAppearance()
+        }));
+    };
 
-    scene.primitives.add(primitive);
+    document.getElementById("geometryInstance").onclick=function () {
+        removePrimitive();
+        //modelmatrix,一个Geometry,多个instances
+         var ellipsoidGeometry = new Cesium.EllipsoidGeometry({
+             vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+             radii : new Cesium.Cartesian3(300000.0, 200000.0, 150000.0)
+         });
 
+         var cyanEllipsoidInstance = new Cesium.GeometryInstance({
+             id:"gi_1",
+             geometry : ellipsoidGeometry,
+             modelMatrix : Cesium.Matrix4.multiplyByTranslation(
+                 Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(-100.0, 40.0)),
+                 new Cesium.Cartesian3(0.0, 0.0, 150000.0),
+                 new Cesium.Matrix4()
+             ),
+             attributes : {
+                 color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.CYAN)
+             }
+         });
+
+         var orangeEllipsoidInstance = new Cesium.GeometryInstance({
+             id:"gi_2",
+             geometry : ellipsoidGeometry,
+             modelMatrix : Cesium.Matrix4.multiplyByTranslation(
+                 Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(-100.0, 40.0)),
+                 new Cesium.Cartesian3(0.0, 0.0, 450000.0),
+                 new Cesium.Matrix4()
+             ),
+             attributes : {
+                 color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.ORANGE)
+             }
+         });
+
+         pri_obj = new Cesium.Primitive({
+             geometryInstances : [cyanEllipsoidInstance, orangeEllipsoidInstance],
+             appearance : new Cesium.PerInstanceColorAppearance({
+                 translucent : false,
+                 closed : true
+             })
+         });
+         scene.primitives.add(pri_obj);
+    };
+
+    //设置更新几何图形的颜色
     setInterval(function() {
-        var attributes = primitive.getGeometryInstanceAttributes('gi_1');
-        attributes.color = Cesium.ColorGeometryInstanceAttribute.toValue(Cesium.Color.fromRandom({alpha : 1.0}));
+        if(pri_obj!=null) {
+            var attributes = pri_obj.getGeometryInstanceAttributes('gi_1');
+            if(attributes!=undefined)
+            attributes.color = Cesium.ColorGeometryInstanceAttribute.toValue(Cesium.Color.fromRandom({alpha: 1.0}));
+        }
     },2000);
+
+    document.getElementById("clear").onclick=function () {
+        removePrimitive();
+    };
+
+    //
+    var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+    handler.setInputAction(function (movement) {
+        var pick = scene.pick(movement.position);
+        if (Cesium.defined(pick) && (pick.id === 'myPrimitive')) {
+            console.log('Mouse clicked rectangle.');
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
 
   </script>
  </div>
