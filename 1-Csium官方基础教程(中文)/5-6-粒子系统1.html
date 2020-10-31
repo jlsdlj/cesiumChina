@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <script>
+    // Your access token can be found at: https://cesium.com/ion/tokens.
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYmEwNWZmMC1lZTlhLTQ0YzQtYTk5OS04MjY0MzgyMmE3MGQiLCJpZCI6MTQ0NzcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjU2NTkwOTZ9.gimVCxsdX7dVIJBhUPO4rHUZh6iHvH-orUikRWlTT9w';
+    // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
+    const viewer = new Cesium.Viewer('cesiumContainer');
+
+    var entity = viewer.entities.add({
+        availability: new Cesium.TimeIntervalCollection([
+            new Cesium.TimeInterval({
+                start: start,
+                stop: stop,
+            }),
+        ]),
+        model: {
+            uri: "./data/Cesium_Air.glb",
+            minimumPixelSize: 10,
+        },
+        viewFrom: new Cesium.Cartesian3(-100.0, 0.0, 100.0),
+        position: position,
+        orientation: new Cesium.VelocityOrientationProperty(position),
+    });
+    viewer.trackedEntity = entity;
+
+    var particleSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+        image : './data/smoke.png',
+        imageSize : new Cesium.Cartesian2(20, 20),
+        startScale : 1.0,
+        endScale : 4.0,
+        particleLife : 1.0,
+        speed : 5.0,
+        emitter : new Cesium.CircleEmitter(0.5),
+        emissionRate : 5.0,
+        lifetime : 16.0
+    }));
+
+    var emitterModelMatrix = new Cesium.Matrix4();
+    var translation = new Cesium.Cartesian3();
+    var rotation = new Cesium.Quaternion();
+    var hpr = new Cesium.HeadingPitchRoll();
+    var trs = new Cesium.TranslationRotationScale();
+
+
+    function computeEmitterModelMatrix() {
+        hpr = Cesium.HeadingPitchRoll.fromDegrees(0.0, 0.0, 0.0, hpr);
+        trs.translation = Cesium.Cartesian3.fromElements(
+            -4.0,
+            0.0,
+            1.4,
+            translation
+        );
+        trs.rotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, rotation);
+
+        return Cesium.Matrix4.fromTranslationRotationScale(
+            trs,
+            emitterModelMatrix
+        );
+    }
+
+    viewer.scene.preUpdate.addEventListener(function (scene, time) {
+        particleSystem.modelMatrix = computeModelMatrix(entity, time);
+
+        // Account for any changes to the emitter model matrix.
+        particleSystem.emitterModelMatrix = computeEmitterModelMatrix();
+
+        // Spin the emitter if enabled.
+        if (viewModel.spin) {
+            viewModel.heading += 1.0;
+            viewModel.pitch += 1.0;
+            viewModel.roll += 1.0;
+        }
+    });
+
+    viewer.camera.flyTo({
+        destination : Cesium.Cartesian3.fromDegrees(-114.0, 50.0, 40),
+        orientation : {
+            heading : Cesium.Math.toRadians(0.0),
+            pitch : Cesium.Math.toRadians(-15.0),
+        }
+    });
+
+
+
+  </script>
+ </div>
+</body>
+</html>

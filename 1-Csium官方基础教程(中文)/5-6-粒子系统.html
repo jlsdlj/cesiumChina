@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.74/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <script>
+    // Your access token can be found at: https://cesium.com/ion/tokens.
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYmEwNWZmMC1lZTlhLTQ0YzQtYTk5OS04MjY0MzgyMmE3MGQiLCJpZCI6MTQ0NzcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjU2NTkwOTZ9.gimVCxsdX7dVIJBhUPO4rHUZh6iHvH-orUikRWlTT9w';
+    // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
+    const viewer = new Cesium.Viewer('cesiumContainer');
+
+    //Set the random number seed for consistent results.
+    Cesium.Math.setRandomNumberSeed(3);
+
+    //Set bounds of our simulation time
+    var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
+    var stop = Cesium.JulianDate.addSeconds(
+        start,
+        120,
+        new Cesium.JulianDate()
+    );
+
+    //Make sure viewer is at the desired time.
+    viewer.clock.startTime = start.clone();
+    viewer.clock.stopTime = stop.clone();
+    viewer.clock.currentTime = start.clone();
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
+    viewer.clock.multiplier = 1;
+    viewer.clock.shouldAnimate = true;
+
+    //Set timeline to simulation bounds
+    viewer.timeline.zoomTo(start, stop);
+
+    var viewModel = {
+        emissionRate: 5.0,
+        gravity: 0.0,
+        minimumParticleLife: 1.2,
+        maximumParticleLife: 1.2,
+        minimumSpeed: 1.0,
+        maximumSpeed: 4.0,
+        startScale: 1.0,
+        endScale: 5.0,
+        particleSize: 25.0,
+    };
+
+
+
+    var entityPosition = new Cesium.Cartesian3();
+    var entityOrientation = new Cesium.Quaternion();
+    var rotationMatrix = new Cesium.Matrix3();
+    var modelMatrix = new Cesium.Matrix4();
+
+    function computeModelMatrix(entity, time) {
+        return entity.computeModelMatrix(time, new Cesium.Matrix4());
+    }
+
+    var emitterModelMatrix = new Cesium.Matrix4();
+    var translation = new Cesium.Cartesian3();
+    var rotation = new Cesium.Quaternion();
+    var hpr = new Cesium.HeadingPitchRoll();
+    var trs = new Cesium.TranslationRotationScale();
+
+    function computeEmitterModelMatrix() {
+        hpr = Cesium.HeadingPitchRoll.fromDegrees(0.0, 0.0, 0.0, hpr);
+        trs.translation = Cesium.Cartesian3.fromElements(
+            -4.0,
+            0.0,
+            1.4,
+            translation
+        );
+        trs.rotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, rotation);
+
+        return Cesium.Matrix4.fromTranslationRotationScale(
+            trs,
+            emitterModelMatrix
+        );
+    }
+
+    var pos1 = Cesium.Cartesian3.fromDegrees(
+        -75.15787310614596,
+        39.97862668312678
+    );
+    var pos2 = Cesium.Cartesian3.fromDegrees(
+        -75.1633691390455,
+        39.95355089912078
+    );
+    var position = new Cesium.SampledPositionProperty();
+
+    position.addSample(start, pos1);
+    position.addSample(stop, pos2);
+
+    var entity = viewer.entities.add({
+        availability: new Cesium.TimeIntervalCollection([
+            new Cesium.TimeInterval({
+                start: start,
+                stop: stop,
+            }),
+        ]),
+        model: {
+            uri: "./data/Cesium_Air.glb",
+            minimumPixelSize: 10,
+        },
+        viewFrom: new Cesium.Cartesian3(-100.0, 0.0, 100.0),
+        position: position,
+        orientation: new Cesium.VelocityOrientationProperty(position),
+    });
+    viewer.trackedEntity = entity;
+
+
+    var scene = viewer.scene;
+    // var particleSystem = scene.primitives.add(
+    //     new Cesium.ParticleSystem({
+    //         image: "./data/smoke.png",
+    //
+    //         startColor: Cesium.Color.LIGHTSEAGREEN.withAlpha(0.7),
+    //         endColor: Cesium.Color.WHITE.withAlpha(0.0),
+    //
+    //         startScale: viewModel.startScale,
+    //         endScale: viewModel.endScale,
+    //
+    //         minimumParticleLife: viewModel.minimumParticleLife,
+    //         maximumParticleLife: viewModel.maximumParticleLife,
+    //
+    //         minimumSpeed: viewModel.minimumSpeed,
+    //         maximumSpeed: viewModel.maximumSpeed,
+    //
+    //         imageSize: new Cesium.Cartesian2(
+    //             viewModel.particleSize,
+    //             viewModel.particleSize
+    //         ),
+    //
+    //         emissionRate: viewModel.emissionRate,
+    //
+    //         bursts: [
+    //             // these burst will occasionally sync to create a multicolored effect
+    //             new Cesium.ParticleBurst({
+    //                 time: 5.0,
+    //                 minimum: 10,
+    //                 maximum: 100,
+    //             }),
+    //             new Cesium.ParticleBurst({
+    //                 time: 10.0,
+    //                 minimum: 50,
+    //                 maximum: 100,
+    //             }),
+    //             new Cesium.ParticleBurst({
+    //                 time: 15.0,
+    //                 minimum: 200,
+    //                 maximum: 300,
+    //             }),
+    //         ],
+    //
+    //         lifetime: 16.0,
+    //
+    //         emitter: new Cesium.CircleEmitter(2.0),
+    //
+    //         emitterModelMatrix: computeEmitterModelMatrix(),
+    //
+    //         updateCallback: applyGravity,
+    //     })
+    // );
+
+    var particleSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+        image : './data/smoke.png',
+        imageSize : new Cesium.Cartesian2(20, 20),
+        startScale : 1.0,
+        endScale : 4.0,
+        particleLife : 1.0,
+        speed : 5.0,
+        emitter : new Cesium.CircleEmitter(0.5),
+        emissionRate : 5.0,
+        //modelMatrix : entity.computeModelMatrix(viewer.clock.startTime, new Cesium.Matrix4()),
+        lifetime : 16.0
+    }));
+
+    var gravityScratch = new Cesium.Cartesian3();
+
+    function applyGravity(p, dt) {
+        // We need to compute a local up vector for each particle in geocentric space.
+        var position = p.position;
+
+        Cesium.Cartesian3.normalize(position, gravityScratch);
+        Cesium.Cartesian3.multiplyByScalar(
+            gravityScratch,
+            viewModel.gravity * dt,
+            gravityScratch
+        );
+
+        p.velocity = Cesium.Cartesian3.add(
+            p.velocity,
+            gravityScratch,
+            p.velocity
+        );
+    }
+
+    viewer.scene.preUpdate.addEventListener(function (scene, time) {
+        particleSystem.modelMatrix = computeModelMatrix(entity, time);
+
+        // Account for any changes to the emitter model matrix.
+        particleSystem.emitterModelMatrix = computeEmitterModelMatrix();
+
+        // Spin the emitter if enabled.
+        if (viewModel.spin) {
+            viewModel.heading += 1.0;
+            viewModel.pitch += 1.0;
+            viewModel.roll += 1.0;
+        }
+    });
+
+
+
+
+
+
+
+  </script>
+ </div>
+</body>
+</html>
