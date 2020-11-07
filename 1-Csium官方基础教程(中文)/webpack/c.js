@@ -1,0 +1,1 @@
+document.getElementById('c').innerHTML='i am c.js';

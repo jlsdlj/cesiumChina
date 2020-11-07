@@ -1,0 +1,2 @@
+(()=>{var e={460:()=>{document.getElementById("c").innerHTML="i am c.js"}},t={};function n(r){if(t[r])return t[r].exports;var o=t[r]={exports:{}};return e[r](o,o.exports,n),o.exports}(()=>{"use strict";n(460),document.getElementById("webpack").innerHTML="hello webpack",console.log(2323)})()})();
+//# sourceMappingURL=b.js.map
